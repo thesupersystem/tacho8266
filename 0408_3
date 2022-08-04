@@ -1,0 +1,83 @@
+#include <ESP8266WiFi.h>        // Include the Wi-Fi library
+#include <WiFiUdp.h>            // Include UDP library
+
+const char* ssid     = "TheB3st$$1";         // The SSID (name) of the Wi-Fi network you want to connect to
+const char* password = "l0ck0N3$$1";     // The password of the Wi-Fi network
+
+WiFiUDP Udp;
+unsigned int localUdpPort = 4210;
+char incomingPacket[256];
+char replyPacket[] = "Hi there! Got the message :-)";
+
+unsigned long lastflash;
+int RPM;
+void ICACHE_RAM_ATTR sens() {
+  RPM++;
+}
+
+void setup() {
+Serial.begin(9600);
+
+// IR Infrared sensor
+attachInterrupt(5,sens,RISING); //SENSOR: GPIO0 (NodeMCU - D3)
+
+ delay(10);
+  Serial.println('\n');
+  
+  WiFi.begin(ssid, password);             // Connect to the network
+  Serial.print("Connecting to ");
+  Serial.print(ssid); Serial.println(" ...");
+
+   int i = 0;
+  while (WiFi.status() != WL_CONNECTED) { // Wait for the Wi-Fi to connect
+    delay(1000);
+    Serial.print(++i); Serial.print(' ');
+  }
+
+  Serial.println('\n');
+  Serial.println("Connection established!");  
+  Serial.print("IP address:\t");
+  Serial.println(WiFi.localIP());         // Send the IP address of the ESP8266 to the computer
+
+
+Udp.begin(localUdpPort);
+  Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
+}
+void loop() {
+
+  
+  noInterrupts();
+  Serial.print(RPM);
+  Serial.print(" RPM sek / ");
+  Serial.print(RPM*60);
+  Serial.println("RPM min. "); 
+  RPM=0;
+  interrupts(); 
+  delay(100);  //1 sek.
+
+  sendPackets();
+}
+
+void sendPackets(){
+
+int packetSize = Udp.parsePacket();
+  if (packetSize)
+  {
+    // receive incoming UDP packets
+    Serial.printf("Received %d bytes from %s, port %d\n", packetSize, Udp.remoteIP().toString().c_str(), Udp.remotePort());
+    int len = Udp.read(incomingPacket, 255);
+    if (len > 0)
+    {
+      incomingPacket[len] = 0;
+    }
+    Serial.printf("UDP packet contents: %s\n", incomingPacket);
+
+    // send back a reply, to the IP address and port we got the packet from
+    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+    Udp.write(replyPacket);
+    Udp.endPacket();
+  }
+
+
+}
+
