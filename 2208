@@ -102,25 +102,7 @@ void loop() {
 
 }
 
-void RPMcal(){
-
-  delay(1000);
-    detachInterrupt(0); //detaches the interrupt
-    newtime=millis()-oldtime; //finds the time 
-    int wings= 3; // no of wings of rotating object, for disc object use 1 with white tape on one side
-    int RPMnew = rev/wings; //here we used fan which has 3 wings
-    rpm=(RPMnew/newtime)*60000; //calculates rpm
-    oldtime=millis(); //saves the current time
-    rev=0;
-
-Serial.println("RPM" + rpm);
-
-attachInterrupt(digitalPinToInterrupt(18),isr,RISING); 
-
-
-
-
-}
+/// SERVER TINGS ///
 
 void connectToWiFi(const char * ssid, const char * pwd){
   Serial.println("Connecting to WiFi network: " + String(ssid));
@@ -223,15 +205,15 @@ request->send(200, "text/html", "HTTP GET request sent to your ESP on input fiel
                                      "<br><a href=\"/\">Return to Home Page</a>");
 
  int ip1 = inputMessage_1.toInt();
-  int ip2 = inputMessage_2.toInt();
-   int ip3 = inputMessage_3.toInt();
+ int ip2 = inputMessage_2.toInt();
+ int ip3 = inputMessage_3.toInt();
  int ip4 = inputMessage_4.toInt();
  int portNumber = inputMessage_5.toInt();
 
 
 // a network broadcast address
  const IPAddress udpAddress(ip1, ip2, ip3, ip4);
-  const int udpPort = portNumber;
+ const int udpPort = portNumber;
 
 
    udp.begin(WiFi.localIP(),udpPort);
@@ -255,4 +237,47 @@ request->send(200, "text/html", "HTTP GET request sent to your ESP on input fiel
   
   }
 
+///RPM THINGS ///
+
+void RPMcal(){
+    
+    int ip1 = inputMessage_1.toInt();
+    int ip2 = inputMessage_2.toInt();
+    int ip3 = inputMessage_3.toInt();
+    int ip4 = inputMessage_4.toInt();
+    int portNumber = inputMessage_5.toInt();
+
+
+    // a network broadcast address
+    const IPAddress udpAddress(ip1, ip2, ip3, ip4);
+    const int udpPort = portNumber;
+
+
+   udp.begin(WiFi.localIP(),udpPort);
+
+    delay(1000);
+    detachInterrupt(0); //detaches the interrupt
+    newtime=millis()-oldtime; //finds the time 
+    int wings= 3; // no of wings of rotating object, for disc object use 1 with white tape on one side
+    int RPMnew = rev/wings; //here we used fan which has 3 wings
+    rpm=(RPMnew/newtime)*60000; //calculates rpm
+    oldtime=millis(); //saves the current time
+    rev=0;
+
+Serial.println("RPM" + rpm);
+
+attachInterrupt(digitalPinToInterrupt(18),isr,RISING); 
+
+        if (connected){
+  OSCMessage msg("/RPM");
+  msg.add((unsigned int) rpm);
+
+     udp.beginPacket(udpAddress, udpPort);
+    msg.send(udp);
+    udp.endPacket();
+    msg.empty();
+
+
+
+}
 
