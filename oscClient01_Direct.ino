@@ -58,7 +58,7 @@ bool IRAM_ATTR TimerHandler0(void * timerNo)
     //min time between pulses has passed
     // Using float calculation / vars in core v2.0.0 and core v2.0.1 will cause crash
     // Not using float => using RPM = 100 * real RPM
-    RPM = ( 6000 / ( rotationTime * TIMER0_INTERVAL_MS ) );
+    RPM = ( 600 / ( rotationTime * TIMER0_INTERVAL_MS ) );
 
     avgRPM = ( 2 * avgRPM + RPM) / 3;
 
@@ -127,7 +127,7 @@ void setup()
   
   while (!Serial);
 
-  delay(100);
+  delay(200);
   
   Serial.print(F("\nStarting RPM_Measure on ")); Serial.println(ARDUINO_BOARD);
   Serial.println(ESP32_TIMER_INTERRUPT_VERSION);
@@ -138,7 +138,7 @@ void setup()
   // For 16-bit timer prescaler up to 1024
 
   // Interval in microsecs
-  if (ITimer0.attachInterruptInterval(TIMER0_INTERVAL_MS * 1000, TimerHandler0))
+  if (ITimer0.attachInterruptInterval(TIMER0_INTERVAL_MS * 100, TimerHandler0))
   {
     Serial.print(F("Starting  ITimer0 OK, millis() = ")); Serial.println(millis());
   }
