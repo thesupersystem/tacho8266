@@ -1,0 +1,71 @@
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <WiFiUdp.h>
+#include <OSCMessage.h>
+
+unsigned long lastflash;
+int RPM;
+void ICACHE_RAM_ATTR sens() {
+  RPM++;
+}
+
+char ssid[] = "TheB3st$$1";          // your network SSID (name)
+char pass[] = "l0ck0N3$$1";                    // your network password
+
+WiFiUDP Udp;                                // A UDP instance to let us send and receive packets over UDP
+const IPAddress outIp(192,168,1,202);        // remote IP of your computer
+const unsigned int outPort = 8000;          // remote port to receive OSC
+const unsigned int localPort = 8888;        // local port to listen for OSC packets (actually not used for sending)
+
+void setup() {
+  Serial.begin(115200);
+
+// Connect to WiFi network
+    Serial.println();
+    Serial.println();
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
+    WiFi.begin(ssid, pass);
+
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("");
+
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+
+    Serial.println("Starting UDP");
+    Udp.begin(localPort);
+    Serial.print("Local port: ");
+    Serial.println(localPort);
+   
+
+
+
+// IR Infrared sensor
+attachInterrupt(0,sens,RISING); //SENSOR: GPIO0 (NodeMCU - D3)
+}
+
+void loop() {
+
+
+
+  noInterrupts();
+  Serial.print(RPM);
+  Serial.print(" RPM sek / ");
+  Serial.print(RPM*60);
+  Serial.println("RPM min. "); 
+//  RPM=0;
+   OSCMessage msg("/RPM");
+    msg.add(RPM);
+    Udp.beginPacket(outIp, outPort);
+    msg.send(Udp);
+    Udp.endPacket();
+    msg.empty();
+    RPM=0;
+  interrupts(); 
+  delay(100);  //1 sek.
+}
