@@ -1,0 +1,87 @@
+//using hall effect sensor 
+
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <WiFiUdp.h>
+#include <OSCMessage.h>
+
+
+//const char* ssid = "TheB3st$$1";
+//const char* password = "l0ck0N3$$1";
+
+const char* ssid = "TP-Link_D844";
+const char* password = "32660050";
+
+//Wifi credentials for local router 
+//SSID : TP-LINK_D844
+//PW : 32660050
+
+
+WiFiUDP Udp;                                // A UDP instance to let us send and receive packets over UDP
+const IPAddress outIp(192,168,0,100);        // remote IP of your computer
+const unsigned int outPort = 8000;          // remote port to receive OSC
+//port numbers:
+//team 1 : 1000 | 2000
+//team 2 : 3000 | 4000
+//team 3 : 5000 | 6000
+//team 4 : 7000 | 8000
+const unsigned int localPort = 8888;        // local port to listen for OSC packets (actually not used for sending)
+
+int sensor = 16;              // the pin that the sensor is atteched to
+int state = HIGH;             // by default, no motion detected
+int val = 0;                 // variable to store the sensor status (value)
+
+void setup() {
+  
+  pinMode(sensor, INPUT);    // initialize sensor as an input
+  Serial.begin(115200); 
+
+  WiFi.begin(ssid, password);
+  Serial.println("Connecting");
+  while(WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.print("Connected to WiFi network with IP Address: ");
+  Serial.println(WiFi.localIP());
+
+      Serial.println("Starting UDP");
+    Udp.begin(localPort);
+    Serial.print("Local port: ");
+    Serial.println(localPort);
+ 
+
+}
+
+void loop() {
+  val = digitalRead(sensor);   // read sensor value
+
+  if(val == 1 )  
+  {  
+   OSCMessage msg("/val");
+    msg.add(val);
+    Udp.beginPacket(outIp, outPort);
+    msg.send(Udp);
+    Udp.endPacket();
+    msg.empty();
+  }  
+  else  
+  {  
+ OSCMessage msg("/val");
+    msg.add(val);
+    Udp.beginPacket(outIp, outPort);
+    msg.send(Udp);
+    Udp.endPacket();
+    msg.empty();  
+  }  
+ 
+
+       
+
+
+    
+    
+   
+ 
+}
